@@ -63,3 +63,7 @@ pub fn get(buffer: Self, p: @Vector(2, isize)) Pixel {
 
     return buffer.memory[getIndex(p, buffer.width)];
 }
+
+pub fn inBounds(buffer: Self, p: @Vector(2, isize)) bool {
+    return p[0] >= 0 and p[0] < self.width and p[1] >= 0 and p[1] < self.height;
+}

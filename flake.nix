@@ -8,7 +8,7 @@
     zls.url = "github:zigtools/zls";
   };
 
-  outputs = { self, flake-utils, nixpkgs, zig, zls, ... }:
+  outputs = { self, flake-utils, nixpkgs, zig, zls, ... } @ inputs:
     flake-utils.lib.eachDefaultSystem
       (system:
         let
