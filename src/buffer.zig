@@ -1,18 +1,22 @@
 const std = @import("std");
 const rl = @import("raylib");
 
-pub fn getIndex(p: @Vector(2, isize), width: usize) usize {
+pub fn getIndex(p: Loc, width: usize) usize {
     const idx = p[0] + @as(isize, @intCast(width)) * p[1];
 
     return @intCast(idx);
 }
 
+const Index = ?usize;
+
 const Pixel = @import("pixel.zig");
+const Loc = Pixel.Loc;
 
 allocator: std.mem.Allocator,
 rand: std.Random,
 
-memory: []Pixel,
+grid: []Index,
+pixels: std.ArrayList(Pixel),
 
 width: usize,
 height: usize,
@@ -25,12 +29,13 @@ pub fn make(
     width: usize,
     height: usize,
 ) !Self {
-    const result = Self{
+    var result = Self{
         .allocator = allocator,
         .rand = rand,
         .width = width,
         .height = height,
-        .memory = try allocator.alloc(Pixel, width * height),
+        .grid = try allocator.alloc(Index, width * height),
+        .pixels = std.ArrayList(Pixel).init(allocator),
     };
 
     result.clear();
@@ -38,32 +43,66 @@ pub fn make(
     return result;
 }
 
-pub fn free(self: Self) void {
-    self.allocator.free(self.memory);
+pub fn free(self: *Self) void {
+    self.allocator.free(self.grid);
+    self.pixels.deinit();
 }
 
-pub fn clone(self: Self, other: Self) void {
-    @memcpy(self.memory, other.memory);
+pub fn clear(self: *Self) void {
+    @memset(self.grid, null);
 }
 
-pub fn clear(self: Self) void {
-    @memset(self.memory, Pixel.make(.Air, self.rand));
+pub fn removeAll(self: *Self) void {
+    @memset(self.grid, null);
+    self.pixels.clearRetainingCapacity();
 }
 
-pub fn set(buffer: Self, p: @Vector(2, isize), pixel: Pixel) void {
-    if (p[0] >= buffer.width or p[1] >= buffer.height) return;
-
-    buffer.memory[getIndex(p, buffer.width)] = pixel;
-}
-
-pub fn get(buffer: Self, p: @Vector(2, isize)) Pixel {
-    if (p[0] >= buffer.width or p[1] >= buffer.height) {
-        return Pixel.make(.Air, buffer.rand);
+pub fn addPixel(self: *Self, pixel: Pixel) void {
+    if (!self.inBounds(pixel.pos)) {
+        return;
     }
 
-    return buffer.memory[getIndex(p, buffer.width)];
+    const idx = self.pixels.items.len;
+    self.pixels.append(pixel) catch |err| @panic(@errorName(err));
+    self.set(pixel.pos, idx);
 }
 
-pub fn inBounds(buffer: Self, p: @Vector(2, isize)) bool {
+pub fn set(self: *Self, p: Loc, idx: Index) void {
+    if (!self.inBounds(p)) {
+        return;
+    }
+
+    self.grid[getIndex(p, self.width)] = idx;
+}
+
+pub fn get(self: *Self, p: Loc) ?Pixel {
+    return if (self.at(p)) |idx| self.pixels.items[idx] else null;
+}
+
+pub fn at(self: *Self, p: Loc) Index {
+    if (!self.inBounds(p)) {
+        return null;
+    }
+
+    return self.grid[getIndex(p, self.width)];
+}
+
+pub fn empty(self: *Self, p: Loc) bool {
+    return self.get(p) == null and self.inBounds(p);
+}
+
+pub fn inBounds(self: *Self, p: Loc) bool {
     return p[0] >= 0 and p[0] < self.width and p[1] >= 0 and p[1] < self.height;
+}
+
+pub fn update(self: *Self) void {
+    for (self.pixels.items) |*pixel| {
+        pixel.update(self);
+    }
+}
+
+pub fn draw(self: *Self) void {
+    for (self.pixels.items) |*pixel| {
+        pixel.draw();
+    }
 }

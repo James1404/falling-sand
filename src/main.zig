@@ -92,19 +92,19 @@ pub fn main() !void {
                 const left = mouseworld[0] - brushSize;
                 const right = mouseworld[0] + brushSize;
 
-                if (left >= 0 and top >= 0) {
-                    var y = top;
-                    while (y < bottom) : (y += 1) {
-                        var x = left;
-                        while (x < right) : (x += 1) {
-                            const d = .{
-                                mouseworld[0] - x,
-                                mouseworld[1] - y,
-                            };
-                            const ps = d[0] * d[0] + d[1] * d[1];
-                            if (ps <= @as(isize, @intCast(brushSize * brushSize))) {
-                                world.getBuffer().set(.{ x, y }, Pixel.make(currentTag, rand));
-                            }
+                var y = top;
+                while (y < bottom) : (y += 1) {
+                    var x = left;
+                    while (x < right) : (x += 1) {
+                        const d = .{
+                            mouseworld[0] - x,
+                            mouseworld[1] - y,
+                        };
+                        const ps = d[0] * d[0] + d[1] * d[1];
+                        if (ps <= @as(isize, @intCast(brushSize * brushSize)) and world.buffer.inBounds(.{ x, y }) and world.buffer.empty(.{ x, y })) {
+                            world.buffer.addPixel(
+                                Pixel.make(currentTag, .{ x, y }, rand),
+                            );
                         }
                     }
                 }
@@ -137,19 +137,23 @@ pub fn main() !void {
 
         rl.endMode2D();
 
-        if (rg.guiButton(
-            .{ .x = 10, .y = 10, .width = 120, .height = 30 },
-            "Clear",
-        ) == 1) {
-            world.getBuffer().clear();
+        if (rg.guiButton(.{
+            .x = 10,
+            .y = 10,
+            .width = 120,
+            .height = 30,
+        }, "Clear") == 1) {
+            world.buffer.clear();
         }
 
         rl.drawText(@tagName(currentTag), rl.getScreenWidth() - 60, 10, 20, rl.Color.black);
         inline for (0.., std.meta.tags(@TypeOf(currentTag))) |idx, tag| {
-            if (rg.guiButton(
-                .{ .x = @floatFromInt(rl.getScreenWidth() - 60), .y = (30 * idx) + (idx * 10) + 50, .width = 50, .height = 30 },
-                @tagName(tag),
-            ) == 1) {
+            if (rg.guiButton(.{
+                .x = @floatFromInt(rl.getScreenWidth() - 60),
+                .y = (30 * idx) + (idx * 10) + 10,
+                .width = 50,
+                .height = 30,
+            }, @tagName(tag)) == 1) {
                 currentTag = tag;
             }
         }
