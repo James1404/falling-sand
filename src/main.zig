@@ -23,6 +23,7 @@ pub fn main() !void {
 
     try lua.doFile("resources/test.lua");
 
+    rl.setConfigFlags(.{ .window_resizable = true });
     rl.initWindow(800, 600, "Hello, world");
     defer rl.closeWindow();
 

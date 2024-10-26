@@ -55,44 +55,39 @@ pub fn draw(self: Self) void {
     );
 }
 
+pub fn weight(self: Self) usize {
+    return switch (self.tag) {
+        .Dirt => 2,
+        .Sand => 2,
+        .Water => 1,
+    };
+}
+
 pub fn update(
     self: *Self,
     buffer: *Buffer,
 ) void {
     switch (self.tag) {
         .Sand => {
-            const down = Loc{ 0, 1 };
-            const left = Loc{ -1, 1 };
-            const right = Loc{ 1, 1 };
-
-            if (self.moveTo(buffer, down)) return;
-            if (self.moveTo(buffer, left)) return;
-            if (self.moveTo(buffer, right)) return;
+            if (self.moveTo(buffer, .{ 0, 1 })) return;
+            if (self.moveTo(buffer, .{ -1, 1 })) return;
+            if (self.moveTo(buffer, .{ 1, 1 })) return;
         },
-        .Dirt => {},
         .Water => {
-            const down = Loc{ 0, 1 };
-            const left = Loc{ -1, 0 };
-            const right = Loc{ 1, 0 };
-            const downleft = Loc{ -1, 1 };
-            const downright = Loc{ 1, 1 };
-
-            if (self.moveTo(buffer, down)) return;
-            if (self.moveTo(buffer, left)) return;
-            if (self.moveTo(buffer, right)) return;
-            if (self.moveTo(buffer, downleft)) return;
-            if (self.moveTo(buffer, downright)) return;
+            if (self.moveTo(buffer, .{ 0, 1 })) return;
+            if (self.moveTo(buffer, .{ -1, 1 })) return;
+            if (self.moveTo(buffer, .{ 1, 1 })) return;
+            if (self.moveTo(buffer, .{ -1, 0 })) return;
+            if (self.moveTo(buffer, .{ 1, 0 })) return;
         },
+        else => {},
     }
 }
 
 pub fn moveTo(self: *Self, buffer: *Buffer, dir: Loc) bool {
     const p = self.pos + dir;
-    if (buffer.empty(p)) {
-        const idx = buffer.at(self.pos);
-        buffer.set(self.pos, null);
+    if (buffer.swap(self.pos, p)) {
         self.pos = p;
-        buffer.set(p, idx);
         return true;
     }
 

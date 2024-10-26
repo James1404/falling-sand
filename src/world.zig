@@ -33,6 +33,8 @@ pub fn free(self: *Self) void {
 }
 
 pub fn randomize(self: *Self) !void {
+    self.buffer.clear();
+
     for (0..self.width) |x| {
         for (0..self.height) |y| {
             const tag = self.rand.enumValue(Pixel.Tag);
