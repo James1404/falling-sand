@@ -55,7 +55,7 @@ pub fn main() !void {
     var paused = false;
 
     var currentTag = Pixel.Tag.Sand;
-    const brushSize: usize = 10;
+    var brushSize: isize = 10;
 
     while (!rl.windowShouldClose()) {
         if (rl.isMouseButtonDown(.mouse_button_right)) {
@@ -65,16 +65,24 @@ pub fn main() !void {
 
         const wheel = rl.getMouseWheelMove();
         if (wheel != 0) {
-            const mouseWorldPos = rl.getScreenToWorld2D(rl.getMousePosition(), camera);
-            camera.offset = rl.getMousePosition();
-            camera.target = mouseWorldPos;
+            if (rl.isKeyDown(.key_left_control)) {
+                brushSize = std.math.clamp(
+                    brushSize + @as(isize, @intFromFloat(wheel)),
+                    1,
+                    100,
+                );
+            } else {
+                const mouseWorldPos = rl.getScreenToWorld2D(rl.getMousePosition(), camera);
+                camera.offset = rl.getMousePosition();
+                camera.target = mouseWorldPos;
 
-            var scaleFactor = 1 + (0.25 * @abs(wheel));
-            if (wheel < 0) {
-                scaleFactor = 1 / scaleFactor;
+                var scaleFactor = 1 + (0.25 * @abs(wheel));
+                if (wheel < 0) {
+                    scaleFactor = 1 / scaleFactor;
+                }
+
+                camera.zoom = std.math.clamp(camera.zoom * scaleFactor, 0.125, 64);
             }
-
-            camera.zoom = std.math.clamp(camera.zoom * scaleFactor, 0.125, 64);
         }
 
         if (rl.isKeyPressed(.key_r)) {
@@ -134,7 +142,7 @@ pub fn main() !void {
         world.draw();
 
         const mouseworld = rl.getScreenToWorld2D(rl.getMousePosition(), camera);
-        rl.drawCircleLinesV(mouseworld, brushSize, rl.Color.white);
+        rl.drawCircleLinesV(mouseworld, @floatFromInt(brushSize), rl.Color.white);
 
         rl.endMode2D();
 
