@@ -85,8 +85,7 @@ pub fn update(
 }
 
 pub fn moveTo(self: *Self, buffer: *Buffer, dir: Loc) bool {
-    const p = self.pos + dir;
-    if (buffer.swap(self.pos, p)) {
+    if (buffer.swap(self.pos, self.pos + dir)) |p| {
         self.pos = p;
         return true;
     }

@@ -123,23 +123,27 @@ pub fn draw(self: *Self) void {
     }
 }
 
-pub fn swap(self: *Self, a: Loc, b: Loc) bool {
-    if (std.meta.eql(a, b)) return false;
+pub fn move(self: *Self, idx: Index, to: Loc) void {
+    if (idx) |i| self.pixels.items[i].pos = to;
+    self.set(to, idx);
+}
 
-    if (self.inBounds(a) and self.inBounds(b)) {
-        const aidx = self.at(a);
-        const bidx = self.at(b);
+pub fn swap(self: *Self, a: Loc, b: Loc) ?Loc {
+    if (std.meta.eql(a, b)) return null;
+    if (!self.inBounds(a) or !self.inBounds(b)) return null;
 
-        const aweight = if (aidx) |idx| self.pixels.items[idx].weight() else 0;
-        const bweight = if (bidx) |idx| self.pixels.items[idx].weight() else 0;
+    const aidx = self.at(a);
+    const bidx = self.at(b);
 
-        if (aweight > bweight) {
-            self.set(b, aidx);
-            self.set(a, bidx);
+    const aweight = if (aidx) |idx| self.pixels.items[idx].weight() else 0;
+    const bweight = if (bidx) |idx| self.pixels.items[idx].weight() else 0;
 
-            return true;
-        }
+    if (aweight > bweight) {
+        self.move(aidx, b);
+        self.move(bidx, a);
+
+        return b;
     }
 
-    return false;
+    return null;
 }
