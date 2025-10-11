@@ -1,0 +1,7 @@
+*~
+*.el
+
+.direnv/
+.envrc
+
+/target
